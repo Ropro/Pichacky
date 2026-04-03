@@ -909,6 +909,23 @@
       let timerInterval = null;
       let displayMonth = null; // { year, month }
 
+      // ─── DEBUG MODE ───────────────────────────────────────────────────
+      function isDebugEnabled() {
+        return localStorage.getItem("pichacky_debug") === "true";
+      }
+
+      window.enableDebug = () => {
+        localStorage.setItem("pichacky_debug", "true");
+        console.log("✅ Debug mode aktivován. Stránka se obnoví...");
+        location.reload();
+      };
+
+      window.disableDebug = () => {
+        localStorage.removeItem("pichacky_debug");
+        console.log("❌ Debug mode deaktivován. Stránka se obnoví...");
+        location.reload();
+      };
+
       // ─── DATA MODEL ───────────────────────────────────────────────────
       // settings: { hourlyRate, workSite, breakMinutes }
       // session: { startTime: ISO string } | null
@@ -1060,7 +1077,9 @@
         document.getElementById("stat-start").textContent = formatTime(
           new Date(session.startTime),
         );
-        document.getElementById("debug-row").style.display = "";
+        if (isDebugEnabled()) {
+          document.getElementById("debug-row").style.display = "";
+        }
         updateElapsed();
       }
 
