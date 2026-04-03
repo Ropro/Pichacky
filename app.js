@@ -407,10 +407,15 @@ const CZECH_NAME_DAYS = {
 async function loadWeather() {
   try {
     // Jednoduchý fetch z wttr.in
-    const response = await fetch('https://wttr.in/Praha?format=%t');
+    const response = await fetch('https://wttr.in/Praha?format=%C|%t');
     if (response.ok) {
-      const temp = await response.text();
-      document.getElementById("weather-info").textContent = `Praha: ${temp.trim()}`;
+      const text = await response.text();
+      const [conditionRaw, tempRaw] = text.trim().split('|');
+      const condition = conditionRaw ? conditionRaw.trim() : '';
+      const temp = tempRaw ? tempRaw.trim() : '';
+      const icon = getWeatherIcon(condition);
+      const display = `Praha ${icon} ${condition}${temp ? ` · ${temp}` : ''}`;
+      document.getElementById("weather-info").textContent = display;
     } else {
       document.getElementById("weather-info").textContent = "Počasí nedostupné";
     }
@@ -418,6 +423,32 @@ async function loadWeather() {
     console.log('Weather error:', error);
     document.getElementById("weather-info").textContent = "Počasí nedostupné";
   }
+}
+
+function getWeatherIcon(condition) {
+  const cond = condition.toLowerCase();
+  if (cond.includes('sun') || cond.includes('jasno') || cond.includes('clear')) {
+    return '☀️';
+  }
+  if (cond.includes('partly') || cond.includes('polojasno') || cond.includes('mostly')) {
+    return '🌤️';
+  }
+  if (cond.includes('cloud') || cond.includes('zataženo') || cond.includes('overcast')) {
+    return '☁️';
+  }
+  if (cond.includes('rain') || cond.includes('déšť') || cond.includes('shower') || cond.includes('drizzle')) {
+    return '🌧️';
+  }
+  if (cond.includes('thunder') || cond.includes('bouřka')) {
+    return '⛈️';
+  }
+  if (cond.includes('snow') || cond.includes('sně')) {
+    return '❄️';
+  }
+  if (cond.includes('fog') || cond.includes('mist') || cond.includes('mlha')) {
+    return '🌫️';
+  }
+  return '🌡️';
 }
 
 function loadNameDays() {
