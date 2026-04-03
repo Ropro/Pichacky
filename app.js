@@ -614,7 +614,6 @@ function init() {
 
   startClock();
   renderMonth();
-  updateTodaySummary();
 
   // Load weather and check holiday
   console.log('Calling loadWeather and loadNameDays');
@@ -675,7 +674,6 @@ function saveSettings() {
   document.getElementById("header-site").textContent = settings.workSite
     ? "— " + settings.workSite
     : "";
-  updateTodaySummary();
   renderMonth();
 }
 
@@ -692,7 +690,6 @@ function setBreak(minutes, btn) {
     session.breakMinutes = minutes;
     saveSession(session);
   }
-  updateTodaySummary();
   renderMonth();
 }
 
@@ -726,10 +723,6 @@ function activateSession(session) {
   document.getElementById("timer-display").classList.add("active");
   document.getElementById("timer-subtitle").textContent =
     "Příchod: " + formatTime(new Date(session.startTime));
-  document.getElementById("today-section").style.display = "";
-  document.getElementById("stat-start").textContent = formatTime(
-    new Date(session.startTime),
-  );
   if (isDebugEnabled()) {
     document.getElementById("debug-row").style.display = "";
   }
@@ -787,36 +780,6 @@ function deactivateSession(endTime, record) {
   document.getElementById("timer-subtitle").textContent =
     "Dnešní odpracovaný čas";
   document.getElementById("debug-row").style.display = "none";
-  updateTodaySummary();
-}
-
-function updateTodaySummary() {
-  const todayStr = toDateStr(new Date());
-  const records = loadRecords().filter((r) => r.date === todayStr);
-  if (records.length === 0) return;
-
-  document.getElementById("today-section").style.display = "";
-
-  const totalMin = records.reduce((s, r) => s + r.netMinutes, 0);
-  const totalEarnings = records.reduce((s, r) => s + r.earnings, 0);
-  const totalBreak = records.reduce((s, r) => s + r.breakMin, 0);
-
-  document.getElementById("stat-start").textContent = records[0].start;
-  document.getElementById("stat-end").textContent =
-    records[records.length - 1].end;
-  document.getElementById("stat-break").textContent = totalBreak + " min";
-  document.getElementById("stat-hours").textContent =
-    minutesToHM(totalMin);
-  document.getElementById("stat-earnings").textContent =
-    totalEarnings.toLocaleString("cs-CZ") + " Kč";
-
-  const session = loadSession();
-  if (!session) {
-    document.getElementById("timer-display").textContent =
-      minutesToHMS(totalMin);
-    document.getElementById("timer-subtitle").textContent =
-      "Dnešní odpracovaný čas";
-  }
 }
 
 // ─── DEBUG ────────────────────────────────────────────────────────
@@ -858,7 +821,6 @@ function addNightShift() {
   saveRecords(records);
 
   showToast("Noční směna přidána — 7:00 odpracováno");
-  updateTodaySummary();
   renderMonth();
 }
 
@@ -1114,7 +1076,6 @@ function deleteRecord(recordId) {
   records.splice(idx, 1);
   saveRecords(records);
   showToast("🗑️ Záznam smazán");
-  updateTodaySummary();
   renderMonth();
 }
 
