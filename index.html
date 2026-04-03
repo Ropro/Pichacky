@@ -652,6 +652,108 @@
         border-color: var(--border2);
       }
 
+      /* ACTION BUTTONS */
+      .action-btn {
+        padding: 4px 8px;
+        border-radius: 4px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text2);
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.15s;
+        margin-right: 4px;
+        font-family: "DM Mono", monospace;
+      }
+
+      .action-btn:hover {
+        color: var(--text);
+        border-color: var(--border2);
+      }
+
+      .action-btn.delete-btn:hover {
+        color: var(--red);
+        border-color: var(--red);
+      }
+
+      .action-btn.edit-btn:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+
+      /* MODAL */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal.show {
+        display: flex;
+      }
+
+      .modal-content {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 28px;
+        max-width: 400px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .modal-content h2 {
+        font-size: 18px;
+        margin-bottom: 20px;
+        color: var(--text);
+      }
+
+      .modal-content .input-group {
+        margin-bottom: 14px;
+      }
+
+      .modal-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 24px;
+      }
+
+      .modal-actions button {
+        flex: 1;
+        padding: 10px;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: var(--bg3);
+        color: var(--text);
+        font-family: "Syne", sans-serif;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+
+      .modal-actions button:hover {
+        border-color: var(--border2);
+      }
+
+      .modal-actions .btn-save {
+        border-color: rgba(212, 255, 106, 0.4);
+        color: var(--accent);
+        background: var(--accent-dim2);
+      }
+
+      .modal-actions .btn-save:hover {
+        background: var(--accent-dim);
+        border-color: rgba(212, 255, 106, 0.6);
+      }
+
       /* DIVIDER */
       .divider {
         height: 1px;
@@ -867,11 +969,12 @@
                 <th>Přestávka</th>
                 <th>Hodiny</th>
                 <th>Výdělek</th>
+                <th style="width: 80px; text-align: center;">Akce</th>
               </tr>
             </thead>
             <tbody id="records-tbody">
               <tr>
-                <td colspan="7">
+                <td colspan="8">
                   <div class="empty-state">
                     <div class="icon">📋</div>
                     <p>
@@ -882,6 +985,33 @@
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- EDIT MODAL -->
+    <div class="modal" id="edit-modal">
+      <div class="modal-content">
+        <h2>Editace záznamu</h2>
+        <div class="input-group">
+          <label>Příchod (HH:MM)</label>
+          <input type="text" id="modal-start" placeholder="07:45" />
+        </div>
+        <div class="input-group">
+          <label>Odchod (HH:MM)</label>
+          <input type="text" id="modal-end" placeholder="16:15" />
+        </div>
+        <div class="input-group">
+          <label>Pracoviště</label>
+          <input type="text" id="modal-site" placeholder="Obecní úřad" />
+        </div>
+        <div class="input-group">
+          <label>Přestávka (min)</label>
+          <input type="number" id="modal-break" placeholder="30" min="0" />
+        </div>
+        <div class="modal-actions">
+          <button onclick="closeEditModal()">Zrušit</button>
+          <button class="btn-save" onclick="saveEditModal()">Uložit</button>
         </div>
       </div>
     </div>
@@ -981,6 +1111,17 @@
         startClock();
         renderMonth();
         updateTodaySummary();
+
+        // Modal event listeners
+        document.getElementById("edit-modal").addEventListener("click", (e) => {
+          if (e.target.id === "edit-modal") closeEditModal();
+        });
+
+        document
+          .getElementById("modal-end")
+          .addEventListener("keypress", (e) => {
+            if (e.key === "Enter") saveEditModal();
+          });
       }
 
       // ─── CLOCK ────────────────────────────────────────────────────────
@@ -1266,7 +1407,7 @@
         // Table
         const tbody = document.getElementById("records-tbody");
         if (records.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="icon">📋</div><p>Žádné záznamy v tomto měsíci</p></div></td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="icon">📋</div><p>Žádné záznamy v tomto měsíci</p></div></td></tr>`;
           return;
         }
 
@@ -1276,6 +1417,10 @@
             const dayName = DAYS_CS[d.getDay()];
             const dayNum = d.getDate() + ". " + (d.getMonth() + 1) + ".";
             const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+            const editBtn = isDebugEnabled()
+              ? `<button class="action-btn edit-btn" onclick="openEditModal(${r.id})">✏️ Edit</button>`
+              : "";
+            const deleteBtn = `<button class="action-btn delete-btn" onclick="deleteRecord(${r.id})">🗑️ Del</button>`;
             return `<tr style="${isWeekend ? "opacity:0.5" : ""}">
       <td class="label">${dayName} ${dayNum}</td>
       <td class="site-tag"><span class="site-pill">${escHtml(r.site || "—")}</span></td>
@@ -1284,6 +1429,7 @@
       <td class="label">${r.breakMin > 0 ? r.breakMin + " min" : "—"}</td>
       <td class="hours-cell">${minutesToHM(r.netMinutes)}</td>
       <td class="earnings-cell">${r.earnings.toLocaleString("cs-CZ")} Kč</td>
+      <td style="text-align: center; font-size: 12px;">${editBtn}${deleteBtn}</td>
     </tr>`;
           })
           .join("");
@@ -1362,6 +1508,88 @@
         t.textContent = msg;
         t.classList.add("show");
         setTimeout(() => t.classList.remove("show"), 3000);
+      }
+
+      // ─── EDIT & DELETE ────────────────────────────────────────────────
+      let editingRecordId = null;
+
+      function openEditModal(recordId) {
+        editingRecordId = recordId;
+        const records = loadRecords();
+        const record = records.find((r) => r.id === recordId);
+        if (!record) return;
+
+        document.getElementById("modal-start").value = record.start;
+        document.getElementById("modal-end").value = record.end;
+        document.getElementById("modal-site").value = record.site || "";
+        document.getElementById("modal-break").value = record.breakMin || 0;
+        document.getElementById("edit-modal").classList.add("show");
+      }
+
+      function closeEditModal() {
+        document.getElementById("edit-modal").classList.remove("show");
+        editingRecordId = null;
+      }
+
+      function saveEditModal() {
+        if (!editingRecordId) return;
+
+        const start = document.getElementById("modal-start").value.trim();
+        const end = document.getElementById("modal-end").value.trim();
+        const site = document.getElementById("modal-site").value.trim();
+        const breakMin = parseInt(
+          document.getElementById("modal-break").value || "0",
+        );
+
+        // Validace formátu HH:MM
+        if (!/^\d{2}:\d{2}$/.test(start) || !/^\d{2}:\d{2}$/.test(end)) {
+          showToast("❌ Chybný formát času (použij HH:MM)");
+          return;
+        }
+
+        const records = loadRecords();
+        const record = records.find((r) => r.id === editingRecordId);
+        if (!record) return;
+
+        // Přepočet hodin
+        const [startH, startM] = start.split(":").map(Number);
+        const [endH, endM] = end.split(":").map(Number);
+        let grossMinutes = endH * 60 + endM - (startH * 60 + startM);
+
+        // Pokud je čas přes půlnoc (např. 22:00 do 05:00)
+        if (grossMinutes < 0) {
+          grossMinutes += 24 * 60;
+        }
+
+        const netMinutes = Math.max(0, grossMinutes - breakMin);
+        const settings = loadSettings();
+        const earnings = Math.round((netMinutes / 60) * settings.hourlyRate);
+
+        record.start = start;
+        record.end = end;
+        record.site = site;
+        record.breakMin = breakMin;
+        record.netMinutes = netMinutes;
+        record.earnings = earnings;
+
+        saveRecords(records);
+        closeEditModal();
+        showToast("✅ Záznam upraven");
+        renderMonth();
+      }
+
+      function deleteRecord(recordId) {
+        if (!confirm("Opravdu smazat tento záznam?")) return;
+
+        const records = loadRecords();
+        const idx = records.findIndex((r) => r.id === recordId);
+        if (idx === -1) return;
+
+        records.splice(idx, 1);
+        saveRecords(records);
+        showToast("🗑️ Záznam smazán");
+        updateTodaySummary();
+        renderMonth();
       }
 
       init();
