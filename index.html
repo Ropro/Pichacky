@@ -81,42 +81,78 @@
 
       <!-- SETTINGS -->
       <div class="section">
-        <div class="section-title">Nastavení dne</div>
+        <div class="section-title">Nastavení a účty</div>
         <div class="card">
-          <div class="settings-grid">
-            <div class="input-group">
-              <label>Hodinová sazba (Kč)</label>
-              <input
-                type="number"
-                id="hourly-rate"
-                placeholder="např. 150"
-                min="0"
-                oninput="saveSettings()"
-              />
-            </div>
-            <div class="input-group">
-              <label>Pracoviště</label>
-              <input
-                type="text"
-                id="work-site"
-                placeholder="např. Rubešova"
-                oninput="saveSettings()"
-              />
-            </div>
-            <div class="input-group">
-              <label>Přestávka na oběd</label>
-              <div class="break-selector">
-                <button class="break-btn selected" onclick="setBreak(0, this)">
-                  Žádná
-                </button>
-                <button class="break-btn" onclick="setBreak(30, this)">
-                  30 min
-                </button>
-                <button class="break-btn" onclick="setBreak(60, this)">
-                  1 hod
-                </button>
+          <div class="tab-bar">
+            <button class="tab-btn active" id="tab-settings" onclick="switchSettingsTab('settings')">Nastavení</button>
+            <button class="tab-btn" id="tab-accounts" onclick="switchSettingsTab('accounts')">Účty</button>
+          </div>
+
+          <div id="settings-tab">
+            <div class="settings-grid">
+              <div class="input-group">
+                <label>Hodinová sazba (Kč)</label>
+                <input
+                  type="number"
+                  id="hourly-rate"
+                  placeholder="např. 150"
+                  min="0"
+                  oninput="saveSettings()"
+                />
+              </div>
+              <div class="input-group">
+                <label>Pracoviště</label>
+                <input
+                  type="text"
+                  id="work-site"
+                  placeholder="např. Rubešova"
+                  oninput="saveSettings()"
+                />
+              </div>
+              <div class="input-group">
+                <label>Přestávka na oběd</label>
+                <div class="break-selector">
+                  <button class="break-btn selected" onclick="setBreak(0, this)">
+                    Žádná
+                  </button>
+                  <button class="break-btn" onclick="setBreak(30, this)">
+                    30 min
+                  </button>
+                  <button class="break-btn" onclick="setBreak(60, this)">
+                    1 hod
+                  </button>
+                </div>
               </div>
             </div>
+          </div>
+
+          <div id="accounts-tab" style="display: none">
+            <div class="settings-grid">
+              <div class="input-group">
+                <label>Název položky</label>
+                <input
+                  type="text"
+                  id="account-title"
+                  placeholder="např. zářivky"
+                />
+              </div>
+              <div class="input-group">
+                <label>Cena (Kč)</label>
+                <input
+                  type="number"
+                  id="account-amount"
+                  placeholder="např. 1875"
+                  min="0"
+                />
+              </div>
+            </div>
+            <div class="btn-row" style="margin-top: 12px">
+              <button class="btn btn-start" onclick="addAccountItem()">
+                Přidat účet
+              </button>
+            </div>
+            <div class="divider"></div>
+            <div class="accounts-list" id="accounts-list"></div>
           </div>
         </div>
       </div>
@@ -173,6 +209,7 @@
             <div class="total-card-label">Celkový výdělek</div>
             <div class="total-card-value green" id="total-earnings">0 Kč</div>
             <div class="total-card-sub" id="total-rate-info"></div>
+            <div class="total-card-sub" id="total-account-info"></div>
           </div>
         </div>
 

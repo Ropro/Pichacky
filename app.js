@@ -420,9 +420,7 @@ async function loadWeather() {
 }
 
 function loadNameDays() {
-  // Pro testování použijeme pevně 3.4.2026
-  const today = new Date(2026, 3, 3); // Rok, měsíc (0-based), den
-  console.log('Today date object:', today);
+  const today = new Date();
   const month = String(today.getMonth() + 1).padStart(2, '0');
   const day = String(today.getDate()).padStart(2, '0');
   const dateKey = `${month}-${day}`;
@@ -437,7 +435,7 @@ function loadNameDays() {
   const nameDay = CZECH_NAME_DAYS[dateKey];
   console.log('Name day found:', nameDay);
   if (nameDay) {
-    const nameDayText = `🎂 Dnešní svátek má: ${nameDay}`;
+    const nameDayText = `🎂 Dnešní svátek slaví: ${nameDay}`;
     holidayText = holidayText ? `${holidayText} • ${nameDayText}` : nameDayText;
   }
 
@@ -504,6 +502,96 @@ function loadRecords() {
 
 function saveRecords(r) {
   localStorage.setItem("pichacky_records", JSON.stringify(r));
+}
+
+function loadAccounts() {
+  return JSON.parse(localStorage.getItem("pichacky_accounts") || "[]");
+}
+
+function saveAccounts(accounts) {
+  localStorage.setItem("pichacky_accounts", JSON.stringify(accounts));
+}
+
+function switchSettingsTab(tab) {
+  const settingsTab = document.getElementById("settings-tab");
+  const accountsTab = document.getElementById("accounts-tab");
+  const settingsBtn = document.getElementById("tab-settings");
+  const accountsBtn = document.getElementById("tab-accounts");
+
+  settingsBtn.classList.toggle("active", tab === "settings");
+  accountsBtn.classList.toggle("active", tab === "accounts");
+  settingsTab.style.display = tab === "settings" ? "" : "none";
+  accountsTab.style.display = tab === "accounts" ? "" : "none";
+}
+
+function renderAccountsTab() {
+  const { year, month } = displayMonth;
+  const monthStr = year + "-" + String(month + 1).padStart(2, "0");
+  const accounts = loadAccounts().filter((a) => a.month === monthStr);
+  const container = document.getElementById("accounts-list");
+  if (!container) return;
+
+  if (accounts.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">🧾</div>
+        <p>Žádné účty pro tento měsíc</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = accounts
+    .map(
+      (a) => `
+      <div class="account-row">
+        <div class="account-title">${escHtml(a.title)}</div>
+        <div class="account-amount">${a.amount.toLocaleString("cs-CZ")} Kč</div>
+        <button class="action-btn delete-btn" onclick="deleteAccount(${a.id})">Smazat</button>
+      </div>`,
+    )
+    .join("");
+}
+
+function addAccountItem() {
+  const title = document.getElementById("account-title").value.trim();
+  const amount = parseFloat(document.getElementById("account-amount").value);
+  if (!title || !amount || amount <= 0) {
+    showToast("Vyplň prosím název a částku účtu.");
+    return;
+  }
+
+  const accounts = loadAccounts();
+  const monthKey =
+    displayMonth.year + "-" + String(displayMonth.month + 1).padStart(2, "0");
+  const item = {
+    id: Date.now(),
+    title,
+    amount: Math.round(amount),
+    addedAt: toDateStr(new Date()),
+    month: monthKey,
+  };
+
+  accounts.push(item);
+  saveAccounts(accounts);
+  document.getElementById("account-title").value = "";
+  document.getElementById("account-amount").value = "";
+  renderAccountsTab();
+  renderMonth();
+  showToast(`Účet přidán: ${item.amount.toLocaleString("cs-CZ")} Kč`);
+}
+
+function deleteAccount(accountId) {
+  if (!confirm("Opravdu smazat tento účet?")) return;
+
+  const accounts = loadAccounts();
+  const idx = accounts.findIndex((a) => a.id === accountId);
+  if (idx === -1) return;
+
+  accounts.splice(idx, 1);
+  saveAccounts(accounts);
+  renderAccountsTab();
+  renderMonth();
+  showToast("Účet smazán");
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────
@@ -788,7 +876,10 @@ function renderMonth() {
 
   const settings = loadSettings();
   const totalMin = records.reduce((s, r) => s + r.netMinutes, 0);
-  const totalEarnings = records.reduce((s, r) => s + r.earnings, 0);
+  const monthAccounts = loadAccounts().filter((a) => a.month === monthStr);
+  const accountTotal = monthAccounts.reduce((s, a) => s + a.amount, 0);
+  const totalEarnings =
+    records.reduce((s, r) => s + r.earnings, 0) + accountTotal;
   const uniqueDays = [...new Set(records.map((r) => r.date))].length;
 
   document.getElementById("total-hours").textContent =
@@ -800,6 +891,10 @@ function renderMonth() {
     totalEarnings.toLocaleString("cs-CZ") + " Kč";
   document.getElementById("total-rate-info").textContent =
     settings.hourlyRate ? settings.hourlyRate + " Kč/hod" : "";
+  document.getElementById("total-account-info").textContent =
+    accountTotal > 0
+      ? `Z toho účty: ${accountTotal.toLocaleString("cs-CZ")} Kč`
+      : "";
 
   // Site breakdown
   const sites = {};
@@ -827,6 +922,9 @@ function renderMonth() {
   } else {
     document.getElementById("site-breakdown-card").style.display = "none";
   }
+
+  // Accounts tab must update for every month
+  renderAccountsTab();
 
   // Table
   const tbody = document.getElementById("records-tbody");
@@ -889,6 +987,10 @@ function toDateStr(d) {
     "-" +
     String(d.getDate()).padStart(2, "0")
   );
+}
+
+function toMonthStr(d) {
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
 }
 
 function formatDuration(ms) {
