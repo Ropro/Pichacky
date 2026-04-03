@@ -117,19 +117,6 @@
                 />
               </div>
               <div class="input-group">
-                <label class="checkbox-label">
-                  <input
-                    type="checkbox"
-                    id="round-time-toggle"
-                    onchange="saveSettings()"
-                  />
-                  Zaokrouhlování minut
-                </label>
-                <div class="toggle-help">
-                  Příchod i odchod se uloží na nejbližší 15minutový interval.
-                </div>
-              </div>
-              <div class="input-group">
                 <label>Přestávka na oběd</label>
                 <div class="break-selector">
                   <button class="break-btn selected" onclick="setBreak(0, this)">
@@ -141,6 +128,19 @@
                   <button class="break-btn" onclick="setBreak(60, this)">
                     1 hod
                   </button>
+                </div>
+              </div>
+              <div class="input-group">
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    id="round-time-toggle"
+                    onchange="saveSettings()"
+                  />
+                  Zaokrouhlování minut
+                </label>
+                <div class="toggle-help">
+                  Příchod i odchod se vždy zaokrouhlí na nejbližší 15minutový interval. To znamená že pokud přijdeš v 7:53, bude se počítat jako 8:00. Pokud odejdeš v 16:10, bude se počítat jako 16:15.
                 </div>
               </div>
             </div>
