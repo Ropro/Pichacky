@@ -54,6 +54,13 @@
             >
               🌙 Noční směna
             </button>
+            <button
+              class="btn btn-start"
+              id="btn-add-shift"
+              onclick="openAddShiftModal()"
+            >
+              ➕ Přidat zapomenutou směnu
+            </button>
           </div>
 
           <div class="debug-row" id="debug-row" style="display: none">
@@ -108,6 +115,19 @@
                   placeholder="např. Rubešova"
                   oninput="saveSettings()"
                 />
+              </div>
+              <div class="input-group">
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    id="round-time-toggle"
+                    onchange="saveSettings()"
+                  />
+                  Zaokrouhlování minut
+                </label>
+                <div class="toggle-help">
+                  Příchod i odchod se uloží na nejbližší 15minutový interval.
+                </div>
               </div>
               <div class="input-group">
                 <label>Přestávka na oběd</label>
@@ -231,7 +251,11 @@
     <!-- EDIT MODAL -->
     <div class="modal" id="edit-modal">
       <div class="modal-content">
-        <h2>Editace záznamu</h2>
+        <h2 id="modal-title">Editace záznamu</h2>
+        <div class="input-group">
+          <label>Datum</label>
+          <input type="date" id="modal-date" />
+        </div>
         <div class="input-group">
           <label>Příchod (HH:MM)</label>
           <input type="text" id="modal-start" placeholder="07:45" />
@@ -239,6 +263,10 @@
         <div class="input-group">
           <label>Odchod (HH:MM)</label>
           <input type="text" id="modal-end" placeholder="16:15" />
+        </div>
+        <div class="input-group">
+          <label>Hodinová sazba (Kč)</label>
+          <input type="number" id="modal-hourly-rate" placeholder="150" min="0" />
         </div>
         <div class="input-group">
           <label>Pracoviště</label>
@@ -250,7 +278,7 @@
         </div>
         <div class="modal-actions">
           <button onclick="closeEditModal()">Zrušit</button>
-          <button class="btn-save" onclick="saveEditModal()">Uložit</button>
+          <button class="btn-save" onclick="saveEditModal()" id="modal-save-button">Uložit</button>
         </div>
       </div>
     </div>

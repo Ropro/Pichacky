@@ -16,6 +16,7 @@ const DAYS_CS = ["Ne", "Po", "Út", "St", "Čt", "Pá", "So"];
 
 let timerInterval = null;
 let displayMonth = null; // { year, month }
+let debugOffsetMs = 0;
 
 // ─── WEATHER & NAME DAYS ──────────────────────────────────────────
 const CZECH_HOLIDAYS_2026 = {
@@ -478,7 +479,7 @@ window.disableDebug = () => {
 function loadSettings() {
   return JSON.parse(
     localStorage.getItem("pichacky_settings") ||
-      '{"hourlyRate":0,"workSite":"","breakMinutes":0}',
+      '{"hourlyRate":0,"workSite":"","breakMinutes":0,"roundTime":false}',
   );
 }
 
@@ -604,9 +605,11 @@ function init() {
   document.getElementById("hourly-rate").value =
     settings.hourlyRate || "";
   document.getElementById("work-site").value = settings.workSite || "";
+  document.getElementById("round-time-toggle").checked = !!settings.roundTime;
   setBreakDisplay(settings.breakMinutes || 0);
 
   // Check for open session
+  debugOffsetMs = 0;
   const session = loadSession();
   if (session) {
     activateSession(session);
@@ -657,7 +660,7 @@ function startClock() {
 function updateElapsed() {
   const session = loadSession();
   if (!session) return;
-  const elapsed = Date.now() - new Date(session.startTime).getTime();
+  const elapsed = Date.now() + debugOffsetMs - new Date(session.startTime).getTime();
   document.getElementById("timer-display").textContent =
     formatDuration(elapsed);
 }
@@ -669,8 +672,14 @@ function saveSettings() {
       parseFloat(document.getElementById("hourly-rate").value) || 0,
     workSite: document.getElementById("work-site").value.trim(),
     breakMinutes: loadSettings().breakMinutes,
+    roundTime: document.getElementById("round-time-toggle").checked,
   };
   saveSettingsData(settings);
+  const session = loadSession();
+  if (session) {
+    session.roundTime = settings.roundTime;
+    saveSession(session);
+  }
   document.getElementById("header-site").textContent = settings.workSite
     ? "— " + settings.workSite
     : "";
@@ -709,6 +718,7 @@ function startWork() {
     startTime: now.toISOString(),
     site: settings.workSite,
     breakMinutes: settings.breakMinutes,
+    roundTime: settings.roundTime || false,
   };
   saveSession(session);
   activateSession(session);
@@ -721,8 +731,12 @@ function activateSession(session) {
   document.getElementById("status-badge").classList.add("active");
   document.getElementById("status-text").textContent = "V práci";
   document.getElementById("timer-display").classList.add("active");
+  const startTime = new Date(session.startTime);
+  const displayStart = session.roundTime
+    ? roundToQuarter(startTime, "nearest")
+    : startTime;
   document.getElementById("timer-subtitle").textContent =
-    "Příchod: " + formatTime(new Date(session.startTime));
+    "Příchod: " + formatTime(displayStart);
   if (isDebugEnabled()) {
     document.getElementById("debug-row").style.display = "";
   }
@@ -732,17 +746,23 @@ function activateSession(session) {
 function endWork() {
   const session = loadSession();
   if (!session) return;
-  finalizeSession(session, new Date());
+  finalizeSession(session, new Date(Date.now() + debugOffsetMs));
 }
 
 function finalizeSession(session, endTime) {
   const settings = loadSettings();
-  const startTime = new Date(session.startTime);
+  const rawStart = new Date(session.startTime);
+  const startTime = session.roundTime
+    ? roundToQuarter(rawStart, "nearest")
+    : rawStart;
+  const endTimeRounded = session.roundTime
+    ? roundToQuarter(endTime, "nearest")
+    : endTime;
   const breakMin =
     session.breakMinutes !== undefined
       ? session.breakMinutes
       : settings.breakMinutes;
-  const grossMinutes = (endTime - startTime) / 60000;
+  const grossMinutes = (endTimeRounded - startTime) / 60000;
   const netMinutes = Math.max(0, grossMinutes - breakMin);
   const earnings = (netMinutes / 60) * settings.hourlyRate;
 
@@ -751,7 +771,7 @@ function finalizeSession(session, endTime) {
     date: toDateStr(startTime),
     site: session.site || settings.workSite || "",
     start: formatTime(startTime),
-    end: formatTime(endTime),
+    end: formatTime(endTimeRounded),
     breakMin: breakMin,
     netMinutes: Math.round(netMinutes),
     earnings: Math.round(earnings),
@@ -772,6 +792,7 @@ function finalizeSession(session, endTime) {
 }
 
 function deactivateSession(endTime, record) {
+  debugOffsetMs = 0;
   document.getElementById("btn-start").disabled = false;
   document.getElementById("btn-end").classList.remove("enabled");
   document.getElementById("status-badge").classList.remove("active");
@@ -786,10 +807,7 @@ function deactivateSession(endTime, record) {
 function debugAdjustTime(seconds) {
   const session = loadSession();
   if (!session) return;
-  const startTime = new Date(session.startTime);
-  startTime.setSeconds(startTime.getSeconds() - seconds);
-  session.startTime = startTime.toISOString();
-  saveSession(session);
+  debugOffsetMs += seconds * 1000;
   activateSession(session);
   showToast(
     "Debug: čas posunut o " +
@@ -941,6 +959,30 @@ function formatTime(d) {
   );
 }
 
+function roundToQuarter(date, direction) {
+  const result = new Date(date);
+  const minutes = result.getMinutes();
+  const seconds = result.getSeconds();
+  const totalSeconds = minutes * 60 + seconds;
+  const intervalSeconds = 15 * 60;
+
+  const floorStep = Math.floor(totalSeconds / intervalSeconds);
+  const remainder = totalSeconds - floorStep * intervalSeconds;
+
+  let step;
+  if (direction === "down") {
+    step = floorStep;
+  } else if (direction === "up") {
+    step = remainder === 0 ? floorStep : floorStep + 1;
+  } else {
+    step = remainder < intervalSeconds / 2 ? floorStep : floorStep + 1;
+  }
+
+  const roundedTotalMinutes = step * 15;
+  result.setMinutes(roundedTotalMinutes, 0, 0);
+  return result;
+}
+
 function toDateStr(d) {
   return (
     d.getFullYear() +
@@ -1000,17 +1042,42 @@ function showToast(msg) {
 
 // ─── EDIT & DELETE ────────────────────────────────────────────────
 let editingRecordId = null;
+let modalMode = "edit";
+
+function openAddShiftModal() {
+  modalMode = "add";
+  editingRecordId = null;
+  const settings = loadSettings();
+  const now = new Date();
+  document.getElementById("modal-title").textContent = "Přidat směnu";
+  document.getElementById("modal-save-button").textContent = "Přidat";
+  document.getElementById("modal-date").value = toDateStr(now);
+  document.getElementById("modal-start").value = formatTime(now);
+  document.getElementById("modal-end").value = formatTime(now);
+  document.getElementById("modal-hourly-rate").value =
+    settings.hourlyRate || "";
+  document.getElementById("modal-site").value = settings.workSite || "";
+  document.getElementById("modal-break").value =
+    settings.breakMinutes !== undefined ? settings.breakMinutes : 0;
+  document.getElementById("edit-modal").classList.add("show");
+}
 
 function openEditModal(recordId) {
+  modalMode = "edit";
   editingRecordId = recordId;
   const records = loadRecords();
   const record = records.find((r) => r.id === recordId);
   if (!record) return;
 
+  document.getElementById("modal-date").value = record.date;
   document.getElementById("modal-start").value = record.start;
   document.getElementById("modal-end").value = record.end;
+  document.getElementById("modal-hourly-rate").value =
+    record.hourlyRate || loadSettings().hourlyRate || "";
   document.getElementById("modal-site").value = record.site || "";
   document.getElementById("modal-break").value = record.breakMin || 0;
+  document.getElementById("modal-title").textContent = "Editace záznamu";
+  document.getElementById("modal-save-button").textContent = "Uložit";
   document.getElementById("edit-modal").classList.add("show");
 }
 
@@ -1020,49 +1087,71 @@ function closeEditModal() {
 }
 
 function saveEditModal() {
-  if (!editingRecordId) return;
-
+  const date = document.getElementById("modal-date").value.trim();
   const start = document.getElementById("modal-start").value.trim();
   const end = document.getElementById("modal-end").value.trim();
   const site = document.getElementById("modal-site").value.trim();
   const breakMin = parseInt(
     document.getElementById("modal-break").value || "0",
   );
+  const hourlyRate = parseFloat(
+    document.getElementById("modal-hourly-rate").value || "0",
+  );
 
-  // Validace formátu HH:MM
+  if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date)) {
+    showToast("❌ Chybný formát data (použij YYYY-MM-DD)");
+    return;
+  }
+
   if (!/^\d{2}:\d{2}$/.test(start) || !/^\d{2}:\d{2}$/.test(end)) {
     showToast("❌ Chybný formát času (použij HH:MM)");
     return;
   }
 
-  const records = loadRecords();
-  const record = records.find((r) => r.id === editingRecordId);
-  if (!record) return;
-
-  // Přepočet hodin
   const [startH, startM] = start.split(":").map(Number);
   const [endH, endM] = end.split(":").map(Number);
   let grossMinutes = endH * 60 + endM - (startH * 60 + startM);
-
-  // Pokud je čas přes půlnoc (např. 22:00 do 05:00)
   if (grossMinutes < 0) {
     grossMinutes += 24 * 60;
   }
-
   const netMinutes = Math.max(0, grossMinutes - breakMin);
-  const settings = loadSettings();
-  const earnings = Math.round((netMinutes / 60) * settings.hourlyRate);
+  const earnings = Math.round((netMinutes / 60) * hourlyRate);
 
-  record.start = start;
-  record.end = end;
-  record.site = site;
-  record.breakMin = breakMin;
-  record.netMinutes = netMinutes;
-  record.earnings = earnings;
+  const records = loadRecords();
 
-  saveRecords(records);
-  closeEditModal();
-  showToast("✅ Záznam upraven");
+  if (modalMode === "add") {
+    const record = {
+      id: Date.now(),
+      date,
+      site,
+      start,
+      end,
+      breakMin,
+      hourlyRate,
+      netMinutes,
+      earnings,
+    };
+    records.push(record);
+    saveRecords(records);
+    closeEditModal();
+    showToast(`✅ Směna přidána: ${minutesToHM(netMinutes)} odpracováno`);
+  } else {
+    if (!editingRecordId) return;
+    const record = records.find((r) => r.id === editingRecordId);
+    if (!record) return;
+    record.date = date;
+    record.start = start;
+    record.end = end;
+    record.site = site;
+    record.breakMin = breakMin;
+    record.hourlyRate = hourlyRate;
+    record.netMinutes = netMinutes;
+    record.earnings = earnings;
+    saveRecords(records);
+    closeEditModal();
+    showToast("✅ Záznam upraven");
+  }
+
   renderMonth();
 }
 
