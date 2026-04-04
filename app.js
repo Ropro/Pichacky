@@ -912,9 +912,11 @@ function renderMonth() {
 
   // Site breakdown
   const sites = {};
+  const siteEarnings = {};
   records.forEach((r) => {
     const s = r.site || "(bez názvu)";
     sites[s] = (sites[s] || 0) + r.netMinutes;
+    siteEarnings[s] = (siteEarnings[s] || 0) + r.earnings;
   });
   const siteKeys = Object.keys(sites);
 
@@ -925,12 +927,11 @@ function renderMonth() {
     siteKeys
       .sort((a, b) => sites[b] - sites[a])
       .forEach((s) => {
-        const pct = totalMin > 0 ? (sites[s] / totalMin) * 100 : 0;
         bd.innerHTML += `
   <div class="site-row">
     <div class="site-row-name">${escHtml(s)}</div>
-    <div class="site-row-bar-wrap"><div class="site-row-bar" style="width:${pct.toFixed(1)}%"></div></div>
     <div class="site-row-hours">${minutesToHM(sites[s])}</div>
+    <div class="site-row-earnings">${siteEarnings[s].toLocaleString("cs-CZ")} Kč</div>
   </div>`;
       });
   } else {

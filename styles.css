@@ -683,26 +683,19 @@ tbody td.site-tag {
   text-overflow: ellipsis;
 }
 
-.site-row-bar-wrap {
-  flex: 2;
-  height: 6px;
-  background: var(--bg3);
-  border-radius: 99px;
-  overflow: hidden;
-}
-
-.site-row-bar {
-  height: 100%;
-  background: var(--accent);
-  border-radius: 99px;
-  transition: width 0.5s ease;
-}
-
 .site-row-hours {
   font-family: "DM Mono", monospace;
   font-size: 13px;
   color: var(--accent);
   min-width: 50px;
+  text-align: right;
+}
+
+.site-row-earnings {
+  font-family: "DM Mono", monospace;
+  font-size: 13px;
+  color: var(--green);
+  min-width: 60px;
   text-align: right;
 }
 
