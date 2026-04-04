@@ -658,6 +658,9 @@ function init() {
   document.getElementById("edit-modal").addEventListener("click", (e) => {
     if (e.target.id === "edit-modal") closeEditModal();
   });
+  document.getElementById("help-modal").addEventListener("click", (e) => {
+    if (e.target.id === "help-modal") closeHelpModal();
+  });
 
   document
     .getElementById("modal-end")
@@ -1115,6 +1118,14 @@ function openEditModal(recordId) {
 function closeEditModal() {
   document.getElementById("edit-modal").classList.remove("show");
   editingRecordId = null;
+}
+
+function openHelpModal() {
+  document.getElementById("help-modal").classList.add("show");
+}
+
+function closeHelpModal() {
+  document.getElementById("help-modal").classList.remove("show");
 }
 
 function saveEditModal() {

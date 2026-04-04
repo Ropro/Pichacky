@@ -28,9 +28,14 @@
       <!-- ACTION PANEL -->
       <div class="section">
         <div class="card">
-          <div class="status-badge" id="status-badge">
-            <div class="status-dot"></div>
-            <span id="status-text">Mimo práci</span>
+          <div class="status-row">
+            <div class="status-badge" id="status-badge">
+              <div class="status-dot"></div>
+              <span id="status-text">Mimo práci</span>
+            </div>
+            <button class="help-btn" onclick="openHelpModal()">
+              ? Nápověda
+            </button>
           </div>
 
           <div class="timer-display" id="timer-display">00:00:00</div>
@@ -279,6 +284,33 @@
         <div class="modal-actions">
           <button onclick="closeEditModal()">Zrušit</button>
           <button class="btn-save" onclick="saveEditModal()" id="modal-save-button">Uložit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HELP MODAL -->
+    <div class="modal" id="help-modal">
+      <div class="modal-content">
+        <h2>Nápověda</h2>
+        <p>
+          Tato stránka slouží k evidenci vašich směn a souvisejících nákladů.<br><br>
+          Můžete:<br><br>
+        </p>
+        <ul>
+          <li>spustit a ukončit běžnou směnu tlačítky „Začít“ / „Skončit“</li>
+          <li>přidat noční směnu tlačítkem „Noční směna“</li>
+          <li>přidat zapomenutou směnu přes „Přidat zapomenutou směnu“</li>
+          <li>nastavit hodinovou sazbu, pracoviště a přestávku v nastavení</li>
+          <li>zapnout zaokrouhlování minut, pak se časy uloží na nejbližší 15minutový interval</li>
+          <li>spravovat pracovní náklady v záložce Účty</li>
+          <li>v měsíčním přehledu vidíte souhrn hodin, výdělku a přehled směn</li>
+        </ul>
+        <p>
+          Pokud zapomenete zapnout či vypnout píchačku, použijte tlačítko
+          „Přidat zapomenutou směnu“ a nastavte datum, start a konec ručně.
+        </p>
+        <div class="modal-actions">
+          <button onclick="closeHelpModal()">Zavřít</button>
         </div>
       </div>
     </div>
