@@ -862,6 +862,10 @@ tbody td.site-tag {
   border-color: var(--border2);
 }
 
+.hidden {
+  display: none;
+}
+
 .modal-actions .btn-save {
   border-color: rgba(212, 255, 106, 0.4);
   color: var(--accent);

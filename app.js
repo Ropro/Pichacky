@@ -1121,11 +1121,17 @@ function closeEditModal() {
 }
 
 function openHelpModal() {
+  showHelpPage(1);
   document.getElementById("help-modal").classList.add("show");
 }
 
 function closeHelpModal() {
   document.getElementById("help-modal").classList.remove("show");
+}
+
+function showHelpPage(page) {
+  document.getElementById("help-page-1").classList.toggle("hidden", page !== 1);
+  document.getElementById("help-page-2").classList.toggle("hidden", page !== 2);
 }
 
 function saveEditModal() {

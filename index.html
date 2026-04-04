@@ -292,25 +292,44 @@
     <div class="modal" id="help-modal">
       <div class="modal-content">
         <h2>Nápověda</h2>
-        <p>
-          Tato stránka slouží k evidenci vašich směn a souvisejících nákladů.<br><br>
-          Můžete:<br><br>
-        </p>
-        <ul>
-          <li>spustit a ukončit běžnou směnu tlačítky „Začít“ / „Skončit“</li>
-          <li>přidat noční směnu tlačítkem „Noční směna“</li>
-          <li>přidat zapomenutou směnu přes „Přidat zapomenutou směnu“</li>
-          <li>nastavit hodinovou sazbu, pracoviště a přestávku v nastavení</li>
-          <li>zapnout zaokrouhlování minut, pak se časy uloží na nejbližší 15minutový interval</li>
-          <li>spravovat pracovní náklady v záložce Účty</li>
-          <li>v měsíčním přehledu vidíte souhrn hodin, výdělku a přehled směn</li>
-        </ul>
-        <p>
-          Pokud zapomenete zapnout či vypnout píchačku, použijte tlačítko
-          „Přidat zapomenutou směnu“ a nastavte datum, start a konec ručně.
-        </p>
-        <div class="modal-actions">
-          <button onclick="closeHelpModal()">Zavřít</button>
+        <div class="help-page" id="help-page-1">
+          <p>
+            Tato stránka slouží k evidenci vašich směn a souvisejících nákladů.<br /><br />
+            Můžete:<br /><br />
+          </p>
+          <ul>
+            <li>spustit a ukončit běžnou směnu tlačítky „Začít“ / „Skončit“</li>
+            <li>přidat noční směnu tlačítkem „Noční směna“</li>
+            <li>přidat zapomenutou směnu přes „Přidat zapomenutou směnu“</li>
+            <li>nastavit hodinovou sazbu, pracoviště a přestávku v nastavení</li>
+            <li>zapnout zaokrouhlování minut, pak se časy uloží na nejbližší 15minutový interval</li>
+            <li>spravovat pracovní náklady v záložce Účty</li>
+            <li>v měsíčním přehledu vidíte souhrn hodin, výdělku a přehled směn</li>
+          </ul>
+          <div class="modal-actions">
+            <button onclick="closeHelpModal()">Zavřít</button>
+            <button class="btn-save" onclick="showHelpPage(2)">Další stránka</button>
+          </div>
+        </div>
+
+        <div class="help-page hidden" id="help-page-2">
+          <p>
+            Hodinová sazba zůstane uložená, takže jí nemusíte zadávat pokaždé.
+          </p>
+          <p>
+            Přestávka na oběd je standardně nastavená na 30 minut, ale můžete jí změnit.
+          </p>
+          <p>
+           Tlačítko noční směna přidá do měsíčního přehledu okamžitě směnu od 22:00 do 5:00 s popisem Odstávka TKB bez oběda.
+          </p>
+            <p>
+              V nastavení Účty můžete evidovat další náklady, které vám vznikají v souvislosti s prací (např. nákup materiálu, doprava apod.). Tyto položky se pak započítají do celkového výdělku v měsíčním přehledu a rozepíšou se.
+            </p>
+
+          <div class="modal-actions">
+            <button onclick="showHelpPage(1)">Zpět</button>
+            <button class="btn-save" onclick="closeHelpModal()">Zavřít</button>
+          </div>
         </div>
       </div>
     </div>
