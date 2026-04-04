@@ -1,3 +1,7 @@
+import { SpeedInsights } from "@vercel/speed-insights/next"
+
+<SpeedInsights />
+
 const MONTHS_CS = [
   "Leden",
   "Únor",
